@@ -34,7 +34,7 @@
     [super viewDidLoad];
     
   //set up ball view.
-    self.orangeBall = [[UIView alloc] initWithFrame:CGRectMake(100.0, 100.0, 50.0, 50.0)];
+    self.orangeBall = [[UIView alloc] initWithFrame:CGRectMake(300.0, 100.0, 50.0, 50.0)];
     self.orangeBall.backgroundColor = [UIColor orangeColor];
     self.orangeBall.layer.cornerRadius = 25.0;
     self.orangeBall.layer.borderColor = [UIColor blackColor].CGColor;
@@ -93,14 +93,14 @@
 -(void)playWithBall{
     
     //make 3 obstacle bars.
-    UIView *obstacle1 = [[UIView alloc] initWithFrame:CGRectMake(0.0, 80.0, 120.0, 20.0)];
+    UIView *obstacle1 = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width / 2 - 5, 550, 50, 20.0)];
     obstacle1.backgroundColor = [UIColor blueColor];
     
-    UIView *obstacle2 = [[UIView alloc] initWithFrame:CGRectMake(170.0, 200.0, 150.0, 20.0)];
-    obstacle2.backgroundColor = [UIColor blueColor];
+    UIView *obstacle2 = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width / 2 - 120, 350.0, 150.0, 20.0)];
+    obstacle2.backgroundColor = [UIColor redColor];
     
-    UIView *obstacle3 = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width / 2 - 75, 320.0, 150.0, 20.0)];
-    obstacle3.backgroundColor = [UIColor blackColor];
+    UIView *obstacle3 = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width / 2 - 75, 420, 250.0, 20.0)];
+    obstacle3.backgroundColor = [UIColor orangeColor];
     
     
     [self.view addSubview:obstacle1];
@@ -129,8 +129,9 @@
     [self.animator addBehavior:obstacles1and2Behavior];
     
     //make the object do exact the oppsite of the 1&2.
-    //UIDynamicItemBehavior *obstacle3Behavior = [[UIDynamicItemBehavior alloc] initWithItems:@[obstacle3Behavior]];
-    
+    UIDynamicItemBehavior *obstacle3Behavior = [[UIDynamicItemBehavior alloc] initWithItems:@[obstacle3]];
+    obstacle3Behavior.allowsRotation = YES;
+    [self.animator addBehavior:obstacle3Behavior];
     
 
 }
