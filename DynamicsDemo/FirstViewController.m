@@ -17,6 +17,11 @@
 
 @property (nonatomic, strong) UIView *orangeBall;
 
+@property (nonatomic) BOOL isBallRolling; //this indicate the ball is rolling or not.
+
+@property (nonatomic, strong) UIView *paddle; //it can be visible privately to the class & it's going to be used more than one methods.
+
+@property (nonatomic) CGPoint paddleCenterPoint; //be used to store the initial paddle center point.
 
 -(void)demoGravity;
 
@@ -44,7 +49,7 @@
     //initialize the animator.
     self.animator = [[UIDynamicAnimator alloc] initWithReferenceView:self.view];
     
-    [self demoGravity];
+    //[self demoGravity];
     
     [self playWithBall];
     
@@ -74,11 +79,11 @@
     
     //let the ball bounce. adding the elasticity
     UIDynamicItemBehavior *ballBehavior = [[UIDynamicItemBehavior alloc] initWithItems:@[self.orangeBall]];
-    ballBehavior.elasticity = 0.9;
+    ballBehavior.elasticity = 0.5;
     
     //add the resistance and friction(0.0-1.0).
     ballBehavior.resistance = 0.0;
-    ballBehavior.friction = 0.0;
+    ballBehavior.friction = 0.5;
     ballBehavior.allowsRotation = NO;
     
     [self.animator addBehavior:ballBehavior];
@@ -90,16 +95,17 @@
 }
 
 
+
 -(void)playWithBall{
     
     //make 3 obstacle bars.
-    UIView *obstacle1 = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width / 2 - 5, 550, 50, 20.0)];
+    UIView *obstacle1 = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width / 2 - 200, 550, 100, 20.0)];
     obstacle1.backgroundColor = [UIColor blueColor];
     
     UIView *obstacle2 = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width / 2 - 120, 350.0, 150.0, 20.0)];
     obstacle2.backgroundColor = [UIColor redColor];
     
-    UIView *obstacle3 = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width / 2 - 75, 420, 250.0, 20.0)];
+    UIView *obstacle3 = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width / 2 - 100, 420, 250.0, 20.0)];
     obstacle3.backgroundColor = [UIColor orangeColor];
     
     
@@ -108,8 +114,24 @@
     [self.view addSubview:obstacle3];
     
     
-    //create a collision behavior object and add it to the animator
-    UICollisionBehavior *collisionBehavior = [[UICollisionBehavior alloc] initWithItems:@[self.orangeBall, obstacle1, obstacle2, obstacle3]];
+    //add the paddle to the screen to play the ball.
+    self.paddle = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width / 2 - 75,
+                                                           self.tabBarController.tabBar.frame.origin.y - 35.0,
+                                                           150.0, 30.0)];
+    
+    self.paddle.backgroundColor = [UIColor greenColor];
+    self.paddle.layer.cornerRadius = 15.0;
+    self.paddleCenterPoint = self.paddle.center;
+    [self.view addSubview:self.paddle];
+    
+    
+    UIGravityBehavior *gravityBehavior = [[UIGravityBehavior alloc] initWithItems:@[self.orangeBall]];
+    [self.animator addBehavior:gravityBehavior];
+
+    
+    
+    //create a collision behavior object and add it to the animator. added the paddle later to the initWithItem
+    UICollisionBehavior *collisionBehavior = [[UICollisionBehavior alloc] initWithItems:@[self.orangeBall, self. paddle, obstacle1, obstacle2, obstacle3]];
     collisionBehavior.translatesReferenceBoundsIntoBoundary = YES;
     
     
@@ -120,6 +142,17 @@
     collisionBehavior.collisionMode = UICollisionBehaviorModeEverything;
     collisionBehavior.collisionDelegate = self;
     [self.animator addBehavior:collisionBehavior];
+    
+    //let the ball bounce. adding the elasticity
+    UIDynamicItemBehavior *ballBehavior = [[UIDynamicItemBehavior alloc] initWithItems:@[self.orangeBall]];
+    ballBehavior.elasticity = 0.5;
+    
+    //add the resistance and friction(0.0-1.0).
+    ballBehavior.resistance = 0.0;
+    ballBehavior.friction = 0.5;
+    ballBehavior.allowsRotation = NO;
+    
+    [self.animator addBehavior:ballBehavior];
     
     
     //addes more density to the objects to make them "extra-heavy".
@@ -133,8 +166,57 @@
     obstacle3Behavior.allowsRotation = YES;
     [self.animator addBehavior:obstacle3Behavior];
     
+    
+    //disable the movement of the green paddle & no rotation.
+    UIDynamicItemBehavior *paddleBehahavior = [[UIDynamicItemBehavior alloc] initWithItems:@[self.paddle]];
+    paddleBehahavior.allowsRotation = NO;
+    paddleBehahavior.density = 100000.0;
+    [self.animator addBehavior:paddleBehahavior];
 
 }
+
+//the push behavior when a touch occurs on the screen.
+-(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event{
+    
+    if (!self.isBallRolling) {
+        
+        UIPushBehavior *pushBehavior = [[UIPushBehavior alloc] initWithItems:@[self.orangeBall] mode:UIPushBehaviorModeInstantaneous];
+        pushBehavior.magnitude = 1.5;
+        [self.animator addBehavior:pushBehavior];
+        
+        self.isBallRolling = YES;
+        
+    }
+}
+
+//to move the paddles around.
+-(void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
+    UITouch *touch = [touches anyObject];
+    CGPoint touchLocation = [touch locationInView:self.view];
+    
+    CGFloat yPoint = self.paddleCenterPoint.y;
+    CGPoint paddleCenter = CGPointMake(touchLocation.x, yPoint);
+    
+    self.paddle.center = paddleCenter;
+    [self.animator updateItemUsingCurrentState:self.paddle];
+    
+}
+
+
+//delegate method that is called when two dynamics items collide (ball & paddle)
+-(void)collisionBehavior:(UICollisionBehavior *)behavior beganContactForItem:(id)item1 withItem:(id)item2 atPoint:(CGPoint)p{
+    
+    if (item1 == self.orangeBall && item2 == self.paddle) {
+        UIPushBehavior *pushBehavior = [[UIPushBehavior alloc] initWithItems:@[self.orangeBall] mode:UIPushBehaviorModeInstantaneous];
+        pushBehavior.angle = 0.0;
+        pushBehavior.magnitude = 0.75;
+        [self.animator addBehavior:pushBehavior];
+        
+    }
+}
+
+
+
 
 
 //change the ball color when the ball hit the boundary.
